@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2020 Intel Corporation
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: vs-sdewan-scc
+  namespace: sdewan-system
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - sdewan-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /scc/v1
+    - uri:
+        exact: /scc/v1/overlays
+    - uri:
+        regex: /scc/v1/overlays/[^\/]*
+    - uri:
+        regex: /scc/v1/overlays/.+/proposals
+    - uri:
+        regex: /scc/v1/overlays/.+/proposals/[^\/]*
+    - uri:
+        regex: /scc/v1/overlays/.+/hubs
+    - uri:
+        regex: /scc/v1/overlays/.+/hubs/[^\/]*
+    - uri:
+        regex: /scc/v1/overlays/.+/hubs/.+/cnfs
+          
+    route:
+    - destination:
+        port:
+          number: 9015
+        host: scc

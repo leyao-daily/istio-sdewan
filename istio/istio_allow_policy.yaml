@@ -1,0 +1,36 @@
+apiVersion: "security.istio.io/v1beta1"
+kind: AuthorizationPolicy
+metadata:
+  name: allow-admin
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  action: ALLOW
+  rules:
+  - when:
+    - key: request.auth.claims[role]
+      values: ["Admin"]
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-user
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        paths: ["/v2/projects/restrictedproj/*"]
+    - operation:
+        methods: ["GET"]
+        paths: ["/v2/projects/restrictedproj"]
+    when:
+      - key: request.auth.claims[role]
+        values: ["User"]
