@@ -27,10 +27,10 @@ spec:
   rules:
   - to:
     - operation:
-        paths: ["/v2/projects/restrictedproj/*"]
+        paths: ["/scc/v1/*"]
     - operation:
         methods: ["GET"]
-        paths: ["/v2/projects/restrictedproj"]
+        paths: ["/scc/v1/overlays"]
     when:
       - key: request.auth.claims[role]
         values: ["User"]
