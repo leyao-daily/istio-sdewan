@@ -2,26 +2,100 @@
 This is for the integration of istio and sdewan
 
 <!-- omit in toc -->
-EMCO uses Istio and other open source solutions to provide Multi-tenancy solution leveraging Istio Authorization and Authentication frameworks. This is achieved without adding any logic in EMCO microservices. Authentication for the EMCO users are done at the Isito Gateway, where all the traffic enters the cluster. Istio along with Authservice (Istio ecosystem project) enables request-level authentication with JSON Web Token (JWT) validation. This can be achieved using a custom authentication provider or any OpenID Connect providers like Keycloak, Auth0 etc.
-
-Refer to EMCO whitepaper for details on EMCO architecture and also security architecture:
-https://www.openness.org/docs/doc/building-blocks/emco/openness-emco
+SDEWAN uses Istio and other open source solutions to leverage Istio Authorization and Authentication frameworks. Authentication for the SDEWAN users are done at the Isito Gateway, where all the traffic enters the cluster. Istio along with Authservice (Istio ecosystem project) enables request-level authentication with JSON Web Token (JWT) validation. This can be achieved using a custom authentication provider or any OpenID Connect providers like Keycloak, Auth0 etc.
 
 Authservice (https://github.com/istio-ecosystem/authservice) is an istio-ecosystem project that works alongside with Envoy proxy. It is used to along with Istio to work with external IAM systems (OAUTH2). Many Enterprises have their own OAUTH2 server for authenticating users and providing roles to users. EMCO along with Istio-ingress and Authservice can use single or multiple OAUTH2 servers, one belonging to each project (Enterprise).
 
-## Steps for setting up EMCO with Istio
+## Steps for setting up SDEWAN with Istio
 
-Prerequisite to this setup is setting up an OAUTH2 server like Keycloak. Refer to Keycloak setup section in this document as a reference.
+These steps need to be followed in the Kubernetes Cluster where SDEWAN-CNF, SDNWAN-CRD-CONTROLLER and SDEWAN-OVERLAY-CONTROLLER is installed.
 
-These steps need to be followed in the Kubernetes Cluster where EMCO is installed.
+### Pre-Installation
 
-#### Install Istio
-In a Kubernetes cluster where EMCO is going to be run install Istio Demo Profile:
-https://istio.io/latest/docs/setup/install/standalone-operator/
+#### Istio
 
-Istio version >= 1.7.4
+- Install istioctl and init
+
+  ```shell
+  # Download the latest istio release
+  curl -L https://istio.io/downloadIstio | sh -
+  
+  # Download the specified istio release for target_arch
+  # In the guide, we need istio version >= 1.7.4
+  # curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.7.4 TARGET_ARCH=x86_64 sh -
+  
+  # Add the `istioctl` client binary to your path
+  export PATH=$PWD/bin:$PATH
+  
+  # Deploy istio operator
+  istioctl operator init
+  ```
+
+- Install the `istio` demo profile using operator
+
+  ```shell
+  # Create istio namespace
+  kubectl create ns istio-system
+  
+  # Aplly the istio demo profile
+  kubectl apply -f - <<EOF
+  apiVersion: install.istio.io/v1alpha1
+  kind: IstioOperator
+  metadata:
+    namespace: istio-system
+    name: example-istiocontrolplane
+  spec:
+    profile: demo
+  EOF
+  ```
+
+### Keycloak
+
+- Create the certificate file for keycloak
+
+  ```shell
+  # Use the key and cert in istio-sdewan/keycloak or using the commands to create
+  openssl genrsa 2048 > keycloak.key
+  openssl req -new -x509 -nodes -sha256 -days 365 -key keycloak.key -out keycloak.crt
+  ```
+
+- Configure and setup keycloak in k8s cluster
+
+  ```shell
+  # Create keycloak namespace
+  kubectl create ns keycloak
+  
+  # Create secret for keycloak
+  kubectl create -n keycloak secret tls ca-keycloak-certs --key keycloak/keycloak.key --cert keycloak/keycloak.crt
+  
+  # Deploy keycloak
+  kubectl apply -f keycloak/keycloak.yaml -n keycloak
+  ```
+
+- Configure in Keycloak using its web interface
+
+  ```
+  - Create a new Realm - ex: enterprise1
+  - Add Users (as per customer requirement)
+  - Create a new Client under realm name - ex: sdewan
+  - Under Setting for client
+        > Change assess type for client to confidential
+        > Under Authentication Flow Overrides - Change Direct grant flow to direct grant
+        > Update Valid Redirect URIs. # "https://istio-ingress-url/*".
+  - In Roles tab:
+        > Add roles (ex. Admin and User)
+        > Under Users assign roles from emco client to users ( Admin and User). Verify under EMCO Client roles for user are in the role.
+  - Add Mappers # Under EMCO Client under mapper tab create a mapper
+        > Mapper type - User Client role
+        > Client-ID: emco
+        > Token claim name: role
+        > Claim JSON Type: string
+  ```
+
+  
 
 #### Configure Istio Sidecar Injection for EMCO namespace
+
 ```Shell
 $ kubectl label namespace emco istio-injection=enabled
 ```
@@ -47,7 +121,7 @@ spec:
 Create certificate for Ingress Gateway and create secret for Istio Ingress Gateway
 ```
 $ kubectl create -n istio-system secret tls emco-credential --key=v2.key --cert=v2.crt
- ```
+```
 
 Example Gateway yaml
 
@@ -310,8 +384,8 @@ To make configuration of authservice easier to work with EMCO, a project called 
 2. Deploy Authservice: With TLS https://github.com/intel/authservice-configurator#authservice-over-tls-connection or without TLS https://github.com/intel/authservice-configurator#deploy-authservice 
 
 3. Deploy Chain CR
-  Example of chain CR: (https://github.com/intel/authservice-configurator/blob/main/config/samples/authcontroller_v1_chain.yaml)
-  Make sure to change the Chain values to correspond to your own OIDC installation. Install the Chains to the namespace where you have your AuthService instance running. After this the ConfigMap which the AuthService needs is dynamically created and AuthService deployment in the same namespace is restarted. 
+    Example of chain CR: (https://github.com/intel/authservice-configurator/blob/main/config/samples/authcontroller_v1_chain.yaml)
+    Make sure to change the Chain values to correspond to your own OIDC installation. Install the Chains to the namespace where you have your AuthService instance running. After this the ConfigMap which the AuthService needs is dynamically created and AuthService deployment in the same namespace is restarted. 
 
   Example chain with EMCO:
 
@@ -334,7 +408,7 @@ To make configuration of authservice easier to work with EMCO, a project called 
       header: ":path"
       prefix: "/v2/projects/enterprise1"
 
-```
+  ```
 Use multiple chains for different OAUTH Servers. The match section of the Chain CR is used to decide which chain will be used for what url.
 
 ```
@@ -615,4 +689,4 @@ config.json: |
       }
     ]
   }
-  ```
+```
