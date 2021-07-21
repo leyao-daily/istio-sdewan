@@ -11,7 +11,7 @@ spec:
   rules:
   - when:
     - key: request.auth.claims[role]
-      values: ["Admin"]
+      values: ["admin"]
 
 ---
 apiVersion: security.istio.io/v1beta1
@@ -33,4 +33,4 @@ spec:
         paths: ["/scc/v1/overlays"]
     when:
       - key: request.auth.claims[role]
-        values: ["User"]
+        values: ["user"]
