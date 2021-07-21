@@ -12,6 +12,8 @@ These steps need to be followed in the Kubernetes Cluster where SDEWAN-CNF, SDNW
 
 ### Pre-Installation
 
+Note: The `url` in the following configurations are recommended to be set as node port mode.
+
 #### Istio
 
 - Install istioctl and init
@@ -65,7 +67,7 @@ These steps need to be followed in the Kubernetes Cluster where SDEWAN-CNF, SDNW
   # Create keycloak namespace
   kubectl create ns keycloak
   
-  # Create secret for keycloak
+  # Create secret for keycloak (key and cert here can be created or offered in repo)
   kubectl create -n keycloak secret tls ca-keycloak-certs --key keycloak/keycloak.key --cert keycloak/keycloak.crt
   
   # Deploy keycloak
@@ -82,14 +84,14 @@ These steps need to be followed in the Kubernetes Cluster where SDEWAN-CNF, SDNW
         > Change assess type for client to confidential
         > Under Authentication Flow Overrides - Change Direct grant flow to direct grant
         > Update Valid Redirect URIs. # "https://istio-ingress-url/*".
-  - In Roles tab:
-        > Add roles (ex. Admin and User)
-        > Under Users assign roles from sdewan client to users ( Admin and User). Verify under sdewan Client roles for user are in the role.
-  - Add Mappers # Under sdewan Client under mapper tab create a mapper
-        > Mapper type - User Client role
-        > Client-ID: sdewan
-        > Token claim name: role
-        > Claim JSON Type: string
+        - In Roles tab:
+              > Add roles (ex. admin and user)
+              > Under Users assign roles from sdewan client to users ( Admin and User). Verify under sdewan Client roles for user are in the role.
+        - Add Mappers # Under sdewan Client under mapper tab create a mapper
+              > Mapper type - User Client role
+              > Client-ID: sdewan
+              > Token claim name: role
+              > Claim JSON Type: string
   ```
 
 ### Configure and integrate
@@ -269,7 +271,7 @@ spec:
   rules:
   - when:
     - key: request.auth.claims[role]
-      values: ["Admin"]
+      values: ["admin"]
 
 ---
 apiVersion: security.istio.io/v1beta1
@@ -291,5 +293,5 @@ spec:
         paths: ["/scc/v1/overlays"]
     when:
       - key: request.auth.claims[role]
-        values: ["User"]
+        values: ["user"]
 ```
