@@ -244,7 +244,7 @@ spec:
 
 Curl to the scc url will give an error "403 : RBAC: access denied"
 
-Retrieve access token from Keycloak and use it to access resources.
+Retrieve access token from Keycloak and use it to access resources. Note that please replace the client secret with your keycloak `sdewan` client secret.
 
 ```shell
 export TOKEN=`curl --location --request POST 'http://<keycloack url>/auth/realms/enterprise1/protocol/openid-connect/token' --header 'Content-Type: application/x-www-form-urlencoded' --data-urlencode 'grant_type=password' --data-urlencode 'client_id=sdewan' --data-urlencode 'username=user1' --data-urlencode 'password=test' --data-urlencode 'client_secret=<secret>' | jq .access_token`
@@ -270,7 +270,9 @@ spec:
   action: ALLOW
   rules:
   - when:
+      # The value in `request.auth.claims[]` is specified in your client mapper with tag name `Token claim name`.
     - key: request.auth.claims[role]
+      # The value in `[]` is defined as the roles in your client.
       values: ["admin"]
 
 ---
@@ -292,6 +294,10 @@ spec:
         methods: ["GET"]
         paths: ["/scc/v1/overlays"]
     when:
+        # The value in `request.auth.claims[]` is specified in your client mapper with tag name `Token claim name`.
       - key: request.auth.claims[role]
+        # The value in `[]` is defined as the roles in your client.
         values: ["user"]
 ```
+
+Then you can only access specified resources with the roles your account have.
