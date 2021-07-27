@@ -182,6 +182,22 @@ spec:
     - uri:
         regex: /scc/v1/overlays/[^\/]*
     - uri:
+        exact: /scc/v1/provider
+    - uri:
+        regex: /scc/v1/provider/[^\/]*
+    - uri:
+        regex: /scc/v1/provider/ipranges
+    - uri:
+        regex: /scc/v1/provider/ipranges/[^\/]*
+    - uri:
+        regex: /scc/v1/overlays/.+/ipranges
+    - uri:
+        regex: /scc/v1/overlays/.+/ipranges/[^\/]*
+    - uri:
+        regex: /scc/v1/overlays/.+/certificates
+    - uri:
+        regex: /scc/v1/overlays/.+/certificates/[^\/]*
+    - uri:
         regex: /scc/v1/overlays/.+/proposals
     - uri:
         regex: /scc/v1/overlays/.+/proposals/[^\/]*
@@ -191,6 +207,25 @@ spec:
         regex: /scc/v1/overlays/.+/hubs/[^\/]*
     - uri:
         regex: /scc/v1/overlays/.+/hubs/.+/cnfs
+    - uri:
+        regex: /scc/v1/overlays/.+/hubs/.+/devices
+    - uri:
+        regex: /scc/v1/overlays/.+/hubs/.+/devices/[^\/]*
+    - uri:
+        regex: /scc/v1/overlays/.+/hubs/.+/connections
+    - uri:
+        regex: /scc/v1/overlays/.+/hubs/.+/connections/[^\/]*
+    - uri:
+        regex: /scc/v1/overlays/.+/devices
+    - uri:
+        regex: /scc/v1/overlays/.+/devices/[^\/]*
+    - uri:
+        regex: /scc/v1/overlays/.+/devices/.+/cnfs
+    - uri:
+        regex: /scc/v1/overlays/.+/devices/.+/connections
+    - uri:
+        regex: /scc/v1/overlays/.+/devices/.+/connections/[^\/]*
+
     route:
     - destination:
         port:
