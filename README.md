@@ -86,12 +86,12 @@ Note: The `url` in the following configurations are recommended to be set as nod
         > Update Valid Redirect URIs. # "https://istio-ingress-url/*".
         - In Roles tab:
               > Add roles (ex. admin and user)
-              > Under Users assign roles from sdewan client to users ( Admin and User). Verify under sdewan Client roles for user are in the role.
         - Add Mappers # Under sdewan Client under mapper tab create a mapper
               > Mapper type - User Client role
               > Client-ID: sdewan
               > Token claim name: role
               > Claim JSON Type: string
+  - Under Users: assign roles from sdewan client to users ( Admin and User). Verify under sdewan Client roles for user are in the role.
   ```
 
 ### Configure and integrate
@@ -254,6 +254,10 @@ spec:
   jwtRules:
     - issuer: "http://<keycloak-url>/auth/realms/enterprise1"
       jwksUri: "http://<keycloak-url>/auth/realms/enterprise1/protocol/openid-connect/certs"
+# And you can create another keycloak service if you need
+# jwtRules:
+#   - issuer: "http://<ano-keycloak-url>/auth/realms/ano-enterprise"
+#     jwksUri: "http://<ano-keycloak-url>/auth/realms/ano-enterprise/protocol/openid-connect/certs"
 ```
 
 #### Authorization Policies with Istio
@@ -282,9 +286,9 @@ Curl to the scc url will give an error "403 : RBAC: access denied"
 Retrieve access token from Keycloak and use it to access resources. Note that please replace the client secret with your keycloak `sdewan` client secret.
 
 ```shell
-export TOKEN=`curl --location --request POST 'http://<keycloack url>/auth/realms/enterprise1/protocol/openid-connect/token' --header 'Content-Type: application/x-www-form-urlencoded' --data-urlencode 'grant_type=password' --data-urlencode 'client_id=sdewan' --data-urlencode 'username=user1' --data-urlencode 'password=test' --data-urlencode 'client_secret=<secret>' | jq .access_token`
+export TOKEN=`curl --location --request POST 'http://<keycloack url>/auth/realms/<realm-name>/protocol/openid-connect/token' --header 'Content-Type: application/x-www-form-urlencoded' --data-urlencode 'grant_type=password' --data-urlencode 'client_id=sdewan' --data-urlencode 'username=user1' --data-urlencode 'password=test' --data-urlencode 'client_secret=<secret>' | jq .access_token`
 
-curl --header "Authorization: Bearer $TOKEN"  http://<istio-ingress-url>/v2/projects
+curl --header "Authorization: Bearer $TOKEN"  http://<istio-ingress-url>/scc/overlays
 ```
 #### Authorization Policies with Istio
 
@@ -333,6 +337,8 @@ spec:
       - key: request.auth.claims[role]
         # The value in `[]` is defined as the roles in your client.
         values: ["user"]
+        
+# If you have another keycloak service, you may create specified configuration for target mapper claim name.
 ```
 
 Then you can only access specified resources with the roles your account have.
