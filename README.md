@@ -12,7 +12,7 @@ These steps need to be followed in the Kubernetes Cluster where SDEWAN-CNF, SDNW
 
 ### Pre-Installation
 
-Note: The `url` in the following configurations are recommended to be set as node port mode.
+Note: The `url` in the following configurations are recommended to be set as node port mode. For example, `<keycloak-url>` can be found from the command `kubectl get service -A`.
 
 #### Istio
 
@@ -21,14 +21,14 @@ Note: The `url` in the following configurations are recommended to be set as nod
   ```shell
   # Download the latest istio release
   curl -L https://istio.io/downloadIstio | sh -
-  
+
   # Download the specified istio release for target_arch
   # In the guide, we need istio version >= 1.7.4
   # curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.7.4 TARGET_ARCH=x86_64 sh -
-  
+
   # Add the `istioctl` client binary to your path
   export PATH=$PWD/bin:$PATH
-  
+
   # Deploy istio operator
   istioctl operator init
   ```
@@ -38,7 +38,7 @@ Note: The `url` in the following configurations are recommended to be set as nod
   ```shell
   # Create istio namespace
   kubectl create ns istio-system
-  
+
   # Aplly the istio demo profile
   kubectl apply -f - <<EOF
   apiVersion: install.istio.io/v1alpha1
@@ -66,10 +66,10 @@ Note: The `url` in the following configurations are recommended to be set as nod
   ```shell
   # Create keycloak namespace
   kubectl create ns keycloak
-  
+
   # Create secret for keycloak (key and cert here can be created or offered in repo)
-  kubectl create -n keycloak secret tls ca-keycloak-certs --key keycloak/keycloak.key --cert keycloak/keycloak.crt
-  
+  kubectl create -n keycloak secret tls ca-keycloak-certs --key keycloak.key --cert keycloak.crt
+
   # Deploy keycloak
   kubectl apply -f keycloak/keycloak.yaml -n keycloak
   ```
@@ -112,6 +112,14 @@ spec:
 And then you can Install SDEWAN overlay controller in the `sdewan-system` namespace
 
 #### Enable mTLS in target namespace
+
+```Shell
+# We set the namespace as `sdewan-system` and enable mTLS
+kubectl apply -f istio-example-yaml/mTLS.yaml
+```
+
+The following is an example to enable mTLS in specified namespace, `sdewan-system` here.
+
 ```yaml
 apiVersion: "security.istio.io/v1beta1"
 kind: "PeerAuthentication"
@@ -127,7 +135,11 @@ spec:
 
 Create certificate for Ingress Gateway and create secret for Istio Ingress Gateway
 ```shell
-kubectl create -n istio-system secret tls sdewan-credential --key=istio/v2.key --cert=istio/v2.crt
+# Use the command to create key and cert for istio
+openssl genrsa 2048 > v2.key
+openssl req -new -x509 -nodes -sha256 -days 365 -key v2.key -out v2.crt
+
+kubectl create -n istio-system secret tls sdewan-credential --key=v2.key --cert=v2.crt
 ```
 
 Example Gateway yaml
@@ -337,8 +349,10 @@ spec:
       - key: request.auth.claims[role]
         # The value in `[]` is defined as the roles in your client.
         values: ["user"]
-        
+
 # If you have another keycloak service, you may create specified configuration for target mapper claim name.
 ```
 
 Then you can only access specified resources with the roles your account have.
+
+Note: For multi-keycloak services for different companies or tenants, you can refer to this [page](https://github.com/leyao-daily/istio-sdewan/blob/main/Multiple%20KeyCloak%20Configuration.md)
