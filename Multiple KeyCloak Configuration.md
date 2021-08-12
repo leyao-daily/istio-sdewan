@@ -1,8 +1,8 @@
-## Multiple KeyCloak Configuration
+## Multiple KeyCloak Services Configuration
 
-In many user cases, we may need different KeyCloak service for different enterprise. They themselves maintain their own authentication. So we simply list how to configure two independent KeyCloak service.
+In many user cases, we may need different KeyCloak service for different enterprise. They themselves maintain their own authentication. So we simply list how to configure two independent KeyCloak services to do authentication on same overlay controller.
 
-![arch](https://github.com/leyao-daily/istio-sdewan/blob/main/mutl-key.png)
+![arch](https://github.com/akraino-edge-stack/icn-sdwan/tree/master/central-controller/docs/istio/mutl-key.png)
 
 ### Create different namespace
 
@@ -27,24 +27,24 @@ openssl req -new -x509 -nodes -sha256 -days 365 -key k2.key -out k2.crt
 kubectl create -n k1 secret tls ca-keycloak-certs --key k1.key --cert k1.crt
 kubectl create -n k2 secret tls ca-keycloak-certs --key k2.key --cert k2.crt
 
-# We will deploy two keycloak service into these two namespace using the configuration file inside the `keycloak` dirctory.
+# We will deploy two keycloak services into these two namespaces using the configuration file inside the `keycloak` dirctory.
 kubectl apply -f keycloak/keycloak.yaml -n k1
 kubectl apply -f keycloak/keycloak.yaml -n k2
 ```
 
 
 
-### Configure the KeyCloak using Web
+### Configure the KeyCloak using Web GUI
 
 ```yaml
 # Access each KeyCloak Web interface and configure as the following, and we do not need to distinguish the value in each KeyCloak Web Configuration.
 - Create a new Realm - ex: enterprise1
-- Add Users (as per customer requirement) - ex: users and configure the confidential password in the first time
-- Create a new Client under realm name - ex: sdewan
+- Add Users (as per customer requirement) - ex: "users" and configure the confidential password - ex:"test" in the first time
+- Create a new Client under realm name - ex: "sdewan"
 - Under Setting for client
       > Change assess type for client to confidential
       > Under Authentication Flow Overrides - Change Direct grant flow to direct grant
-      > Update Valid Redirect URIs. # "https://istio-ingress-url/*".
+      > Update Valid Redirect URIs. # "https://<istio-ingress-url>/*".
       - In Roles tab:
             > Add roles (ex. admin and user)
       - Add Mappers # Under sdewan Client under mapper tab create a mapper
@@ -98,7 +98,7 @@ spec:
         notRequestPrincipals: ["*"]
 ```
 
-Curl to the scc url will give an error "403 : RBAC: access denied"
+Curl to the scc service url will get an error "403 : RBAC: access denied"
 
 Retrieve access token from Keycloak and use it to access resources. Note that please replace the client secret with your keycloak `sdewan` client secret. Different enterprise have its own secret and they can get the token through their keycloak service.
 
@@ -169,4 +169,4 @@ spec:
         # The value in `[]` is defined as the roles in your client.
 ```
 
-Then you can find that the user in k1 enterprise1 can not access overlay2 which can be access by the user in k2 enterprise1. Meantime, the user in k2 enterprise1 can not access overlay1 which can be access by the user in k1 enterprise1.
+Then you can find that the user in k1 enterprise1 can not access overlay2 which can be accessed by the user in k2 enterprise1. Meantime, the user in k2 enterprise1 can not access overlay1 which can be accessed by the user in k1 enterprise1.
