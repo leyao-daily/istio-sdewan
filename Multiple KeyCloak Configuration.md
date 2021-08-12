@@ -2,6 +2,8 @@
 
 In many user cases, we may need different KeyCloak service for different enterprise. They themselves maintain their own authentication. So we simply list how to configure two independent KeyCloak service.
 
+![arch](https://github.com/leyao-daily/istio-sdewan/blob/main/mutl-key.png)
+
 ### Create different namespace
 
 ```shell
@@ -145,7 +147,7 @@ spec:
   - from:
     - source:
       # This is the issuer you defined in pre-steps as an istio RequestAuthentication with `/*`
-        requestPrincipals: ["http://10.101.34.164:8080/auth/realms/enterprise1/*"]
+        requestPrincipals: ["<issuer-defined-in-RequestAuthentication>/*"]
     to:
     - operation:
         methods: ["GET"]
@@ -156,7 +158,7 @@ spec:
         # The value in `[]` is defined as the roles in your client.
   - from:
     - source:
-        requestPrincipals: ["http://10.102.43.158:8080/auth/realms/enterprise1/*"]
+        requestPrincipals: ["<issuer-defined-in-RequestAuthentication>/*"]
     to:
     - operation:
         methods: ["GET"]
